@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adivina la Película - Kids Edition</title>
+    <style>
+        :root {
+            --p1: #ff4757; --p2: #2e86de; --p3: #2ed573; --p4: #ffa502;
+        }
+        body {
+            font-family: 'Arial Rounded MT Bold', sans-serif;
+            background: #2f3542; color: white; text-align: center; margin: 0; overflow: hidden;
+        }
+        #scoreboard {
+            display: flex; justify-content: space-around; background: #1e2227; padding: 15px;
+        }
+        .score-box { padding: 10px 20px; border-radius: 10px; min-width: 100px; }
+        .p1 { background: var(--p1); } .p2 { background: var(--p2); }
+        .p3 { background: var(--p3); } .p4 { background: var(--p4); }
+
+        #game-container { margin-top: 20px; position: relative; }
+        
+        #movie-img {
+            width: 400px; height: 550px; object-fit: cover;
+            border: 8px solid white; border-radius: 15px;
+            filter: blur(50px); /* Inicialmente muy borroso */
+            transition: filter 0.1s linear;
+        }
+
+        #points-display { font-size: 3rem; margin: 10px; color: #f1c40f; }
+
+        .controls { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 400px; margin: 20px auto; }
+        
+        button {
+            padding: 15px; border: none; border-radius: 10px; color: white;
+            font-weight: bold; cursor: pointer; font-size: 1.2rem; transition: 0.2s;
+        }
+        button:active { transform: scale(0.95); }
+        .btn-stop { height: 80px; }
+        #btn-main { background: #747d8c; width: 200px; font-size: 1.5rem; margin-top: 20px;}
+
+        /* Modal para verificar acierto */
+        #modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; color: black; padding: 30px; border-radius: 20px; z-index: 10;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+<div id="scoreboard">
+    <div class="score-box p1">P1: <span id="s1">0</span></div>
+    <div class="score-box p2">P2: <span id="s2">0</span></div>
+    <div class="score-box p3">P3: <span id="s3">0</span></div>
+    <div class="score-box p4">P4: <span id="s4">0</span></div>
+</div>
+
+<div id="points-display">PUNTOS: 100</div>
+
+<div id="game-container">
+    <img id="movie-img" src="" alt="Portada">
+</div>
+
+<div class="controls">
+    <button class="btn-stop p1" onclick="stopGame(1)">ALTO P1</button>
+    <button class="btn-stop p2" onclick="stopGame(2)">ALTO P2</button>
+    <button class="btn-stop p3" onclick="stopGame(3)">ALTO P3</button>
+    <button class="btn-stop p4" onclick="stopGame(4)">ALTO P4</button>
+</div>
+
+<button id="btn-main" onclick="nextRound()">EMPEZAR</button>
+
+<div id="modal">
+    <h2 id="modal-title">¿Acertó el Jugador?</h2>
+    <p>Nombre de la película: <strong id="movie-name">---</strong></p>
+    <button style="background: #2ed573;" onclick="verify(true)">SÍ, PUNTO!</button>
+    <button style="background: #ff4757;" onclick="verify(false)">NO, CONTINUAR</button>
+</div>
+
+<script>
+    // --- CONFIGURACIÓN DE PELÍCULAS ---
+    // Reemplaza estos nombres con los nombres de tus archivos de imagen
+    const movieLibrary = [
+        { name: "Toy Story", img: "toystory.jpg" },
+        { name: "Frozen", img: "frozen.jpg" },
+        { name: "El Rey León", img: "reyleon.jpg" },
+        { name: "Shrek", img: "shrek.jpg" },
+        { name: "Moana", img: "moana.jpg" },
+        { name: "Cars", img: "cars.jpg" }
+    ];
+
+    let currentMovies = [...movieLibrary];
+    let currentIdx = 0;
+    let points = 100;
+    let timer = null;
+    let activePlayer = null;
+    let scores = [0, 0, 0, 0];
+
+    const imgEl = document.getElementById('movie-img');
+    const pointsEl = document.getElementById('points-display');
+    const modal = document.getElementById('modal');
+
+    // Mezclar películas al inicio
+    function shuffle() {
+        currentMovies.sort(() => Math.random() - 0.5);
+    }
+    shuffle();
+
+    function nextRound() {
+        if (currentIdx >= currentMovies.length) {
+            alert("¡Fin del juego!");
+            location.reload();
+            return;
+        }
+        
+        // Reset de estado
+        points = 100;
+        pointsEl.innerText = `PUNTOS: ${points}`;
+        imgEl.src = currentMovies[currentIdx].img;
+        imgEl.style.filter = "blur(50px)";
+        document.getElementById('btn-main').style.display = 'none';
+        
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timer);
+        timer = setInterval(() => {
+            if (points > 0) {
+                points--;
+                pointsEl.innerText = `PUNTOS: ${points}`;
+                // Reducir desenfoque proporcionalmente
+                let blurVal = (points / 2); // De 50px a 0px
+                imgEl.style.filter = `blur(${blurVal}px)`;
+            } else {
+                clearInterval(timer);
+                revealMovie();
+            }
+        }, 150); // Velocidad de la ronda (aprox 15 seg para llegar a 0)
+    }
+
+    function stopGame(player) {
+        if (!timer) return;
+        clearInterval(timer);
+        activePlayer = player;
+        document.getElementById('movie-name').innerText = currentMovies[currentIdx].name;
+        modal.style.display = 'block';
+    }
+
+    function verify(correct) {
+        modal.style.display = 'none';
+        if (correct) {
+            scores[activePlayer - 1] += points;
+            updateScoreboard();
+            revealMovie();
+            document.getElementById('btn-main').innerText = "SIGUIENTE";
+            document.getElementById('btn-main').style.display = 'inline-block';
+            currentIdx++;
+            timer = null;
+        } else {
+            // Continúa donde se quedó
+            startTimer();
+        }
+    }
+
+    function revealMovie() {
+        imgEl.style.filter = "blur(0px)";
+        if (points === 0) {
+             document.getElementById('btn-main').innerText = "SIGUIENTE";
+             document.getElementById('btn-main').style.display = 'inline-block';
+             currentIdx++;
+        }
+    }
+
+    function updateScoreboard() {
+        document.getElementById('s1').innerText = scores[0];
+        document.getElementById('s2').innerText = scores[1];
+        document.getElementById('s3').innerText = scores[2];
+        document.getElementById('s4').innerText = scores[3];
+    }
+</script>
+
+</body>
+</html>
