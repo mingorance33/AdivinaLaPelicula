@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adivina la Película - GitHub Auto-Load</title>
+    <title>Adivina la Película - Kids v2.0</title>
     <style>
         :root {
             --p1: #ff4757; --p2: #2e86de; --p3: #2ed573; --p4: #ffa502;
@@ -14,36 +14,25 @@
             background: var(--bg); color: white; margin: 0;
             display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
-
-        /* Marcador */
         #scoreboard { display: flex; justify-content: space-around; padding: 10px; background: rgba(0,0,0,0.5); }
         .score-box { padding: 8px 15px; border-radius: 12px; font-weight: bold; min-width: 70px; text-align: center; border: 1px solid #ffffff33; }
-
-        /* Área de Juego */
         #game-view { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
         #points-label { font-size: 3.5rem; color: #f1c40f; margin-bottom: 5px; text-shadow: 2px 2px 5px black; }
-        
         #image-container {
             width: 95%; max-width: 600px; height: 50vh; 
             background: #2c3e50; border: 8px solid white; border-radius: 20px;
             display: flex; align-items: center; justify-content: center; overflow: hidden;
             position: relative;
         }
-        /* Ajustado: el blur inicial es más suave */
-        #movie-img { width: 100%; height: 100%; object-fit: contain; filter: blur(30px); display: none; }
-        #status-msg { font-size: 1.2rem; color: #aaa; text-align: center; padding: 20px; }
-
-        /* Controles */
+        /* Ajustado: el blur inicial ahora es de solo 20px para mayor nitidez */
+        #movie-img { width: 100%; height: 100%; object-fit: contain; filter: blur(20px); display: none; }
+        #status-msg { font-size: 1.1rem; color: #ffcc00; text-align: center; padding: 20px; font-family: monospace; }
         #controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; background: rgba(0,0,0,0.6); }
         .btn-stop { height: 75px; border: none; border-radius: 15px; color: white; font-size: 1.4rem; font-weight: bold; cursor: pointer; }
         .btn-stop:disabled { background: #4b4b4b !important; opacity: 0.3; }
-
         #action-row { grid-column: 1 / -1; display: flex; justify-content: center; gap: 20px; margin-top: 5px; }
         .btn-action { padding: 12px 30px; font-size: 1.1rem; border: none; border-radius: 50px; color: white; cursor: pointer; font-weight: bold; }
         #btn-main { background: #2ed573; min-width: 180px; }
-        #btn-reset { background: #ff4757; }
-
-        /* Modal */
         #modal-overlay {
             display: none; position: fixed; top:0; left:0; width:100%; height:100%;
             background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center;
@@ -65,7 +54,7 @@
 <div id="game-view">
     <div id="points-label">100</div>
     <div id="image-container">
-        <div id="status-msg">Conectando con GitHub...</div>
+        <div id="status-msg">Cargando desde GitHub...</div>
         <img id="movie-img" src="">
     </div>
 </div>
@@ -78,13 +67,13 @@
 
     <div id="action-row">
         <button id="btn-main" class="btn-action" onclick="nextRound()" style="display:none">EMPEZAR</button>
-        <button id="btn-reset" class="btn-action" onclick="location.reload()">REINICIAR</button>
+        <button class="btn-action" style="background: #ff4757" onclick="location.reload()">REINICIAR</button>
     </div>
 </div>
 
 <div id="modal-overlay">
     <div id="modal">
-        <h2>¿Jugador <span id="pl-num"></span> acertó?</h2>
+        <h2>¿Acertó Jugador <span id="pl-num"></span>?</h2>
         <h3 id="correct-name" style="color: #2e86de; text-transform: uppercase;"></h3>
         <div class="modal-btns">
             <button style="background: #2ed573" onclick="confirm(true)">SÍ ✅</button>
@@ -95,11 +84,10 @@
 
 <script>
     /** 
-     * CONFIGURACIÓN IMPORTANTE 
-     * Pon aquí tus datos de GitHub
+     * CONFIGURACIÓN DE GITHUB
      */
-    const GITHUB_USER = "mingorance33"; 
-    const GITHUB_REPO = "AdivinaLaPelicula";
+    const GITHUB_USER = "TU_USUARIO_AQUÍ"; 
+    const GITHUB_REPO = "TU_REPO_AQUÍ";
 
     let deck = [];
     let currentIdx = 0;
@@ -114,9 +102,16 @@
     const statusMsg = document.getElementById('status-msg');
 
     async function loadFilesFromGitHub() {
+        if(GITHUB_USER.includes("AQUÍ")) {
+            statusMsg.innerHTML = "ERROR:<br>Edita el archivo index.html y pon tu usuario de GitHub.";
+            return;
+        }
+
         const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/`;
         try {
             const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}: Verifica que el repo sea PÚBLICO.`);
+            
             const files = await response.json();
             deck = files
                 .filter(file => {
@@ -133,26 +128,25 @@
                 statusMsg.innerText = `¡${deck.length} películas listas!`;
                 mainBtn.style.display = 'block';
             } else {
-                statusMsg.innerText = "No hay imágenes en la carpeta raíz.";
+                statusMsg.innerText = "No se encontraron fotos en el repositorio.";
             }
         } catch (e) {
-            statusMsg.innerText = "Error de conexión. Revisa configuración.";
+            statusMsg.innerHTML = `Error de conexión. Revisa que tu repo sea público.`;
         }
     }
 
     function nextRound() {
         if (currentIdx >= deck.length) {
-            alert("¡Fin del juego!");
+            alert("¡Has terminado todas las películas!");
             location.reload();
             return;
         }
-        
         statusMsg.style.display = 'none';
         img.style.display = 'block';
         img.src = deck[currentIdx].url;
         
-        // --- AQUÍ EL CAMBIO: Blur inicial de 30px ---
-        img.style.filter = "blur(30px)";
+        // Blur inicial más nítido (20px)
+        img.style.filter = "blur(20px)";
         
         points = 100;
         pointsTxt.innerText = points;
@@ -167,9 +161,8 @@
             if (points > 0) {
                 points--;
                 pointsTxt.innerText = points;
-                // --- AQUÍ EL CAMBIO: Fórmula ajustada para que baje desde 30px ---
-                let blurLevel = points / 3.33; 
-                img.style.filter = `blur(${blurLevel}px)`;
+                // Fórmula para bajar de 20px a 0px proporcionalmente
+                img.style.filter = `blur(${points / 5}px)`;
             } else {
                 finishRound();
             }
@@ -190,11 +183,10 @@
         if (correct) {
             scores[activePlayer - 1] += points;
             updateScores();
-            finishRound();
-        } else {
-            setStops(true);
-            startTimer();
-        }
+        } 
+        
+        // NUEVA LÓGICA: Tanto si acierta como si falla, revelamos y pasamos a la siguiente
+        finishRound();
     }
 
     function finishRound() {
