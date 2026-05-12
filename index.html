@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adivina la Película - Carga Automática</title>
+    <title>Adivina la Película - GitHub Auto-Load</title>
     <style>
         :root {
             --p1: #ff4757; --p2: #2e86de; --p3: #2ed573; --p4: #ffa502;
-            --bg: #2f3542;
+            --bg: #1e272e;
         }
         body {
             font-family: 'Arial Rounded MT Bold', sans-serif;
@@ -15,20 +15,9 @@
             display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
 
-        /* Pantalla de Carga Inicial */
-        #setup-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); z-index: 2000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .upload-box {
-            background: #ffffff11; padding: 40px; border: 3px dashed #ffffff44;
-            border-radius: 20px; text-align: center;
-        }
-
         /* Marcador */
-        #scoreboard { display: flex; justify-content: space-around; padding: 10px; background: rgba(0,0,0,0.3); }
-        .score-box { padding: 8px 15px; border-radius: 12px; font-weight: bold; min-width: 80px; text-align: center; }
+        #scoreboard { display: flex; justify-content: space-around; padding: 10px; background: rgba(0,0,0,0.5); }
+        .score-box { padding: 8px 15px; border-radius: 12px; font-weight: bold; min-width: 70px; text-align: center; border: 1px solid #ffffff33; }
 
         /* Área de Juego */
         #game-view { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
@@ -36,15 +25,17 @@
         
         #image-container {
             width: 95%; max-width: 600px; height: 50vh; 
-            background: #1e2227; border: 8px solid white; border-radius: 20px;
+            background: #2c3e50; border: 8px solid white; border-radius: 20px;
             display: flex; align-items: center; justify-content: center; overflow: hidden;
+            position: relative;
         }
         #movie-img { width: 100%; height: 100%; object-fit: contain; filter: blur(60px); display: none; }
+        #status-msg { font-size: 1.2rem; color: #aaa; text-align: center; padding: 20px; }
 
         /* Controles */
-        #controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; background: rgba(0,0,0,0.4); }
-        .btn-stop { height: 70px; border: none; border-radius: 15px; color: white; font-size: 1.4rem; font-weight: bold; cursor: pointer; }
-        .btn-stop:disabled { background: #57606f !important; opacity: 0.3; }
+        #controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; background: rgba(0,0,0,0.6); }
+        .btn-stop { height: 75px; border: none; border-radius: 15px; color: white; font-size: 1.4rem; font-weight: bold; cursor: pointer; }
+        .btn-stop:disabled { background: #4b4b4b !important; opacity: 0.3; }
 
         #action-row { grid-column: 1 / -1; display: flex; justify-content: center; gap: 20px; margin-top: 5px; }
         .btn-action { padding: 12px 30px; font-size: 1.1rem; border: none; border-radius: 50px; color: white; cursor: pointer; font-weight: bold; }
@@ -58,23 +49,10 @@
         }
         #modal { background: white; color: black; padding: 30px; border-radius: 25px; text-align: center; width: 300px; }
         .modal-btns { display: flex; gap: 15px; margin-top: 25px; }
-        .modal-btns button { flex: 1; padding: 15px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 1.1rem; }
+        .modal-btns button { flex: 1; padding: 15px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
     </style>
 </head>
 <body>
-
-<!-- PANTALLA INICIAL PARA CARGAR IMÁGENES -->
-<div id="setup-screen">
-    <div class="upload-box">
-        <h1>🎬 Juego de Películas</h1>
-        <p>Selecciona la carpeta donde tienes los JPG</p>
-        <input type="file" id="folderInput" webkitdirectory directory multiple style="display:none">
-        <button class="btn-action" style="background:#2e86de; font-size: 1.5rem;" onclick="document.getElementById('folderInput').click()">
-            📁 CARGAR CARPETA
-        </button>
-        <p id="file-count" style="margin-top:20px; color: #aaa;"></p>
-    </div>
-</div>
 
 <div id="scoreboard">
     <div class="score-box" style="background: var(--p1)">P1: <span id="s1">0</span></div>
@@ -86,6 +64,7 @@
 <div id="game-view">
     <div id="points-label">100</div>
     <div id="image-container">
+        <div id="status-msg">Conectando con GitHub...</div>
         <img id="movie-img" src="">
     </div>
 </div>
@@ -97,8 +76,8 @@
     <button class="btn-stop" style="background: var(--p4)" onclick="playerStop(4)" id="stop4" disabled>ALTO P4</button>
 
     <div id="action-row">
-        <button id="btn-main" class="btn-action" onclick="nextRound()">EMPEZAR</button>
-        <button id="btn-reset" class="btn-action" onclick="location.reload()">REINICIAR TODO</button>
+        <button id="btn-main" class="btn-action" onclick="nextRound()" style="display:none">EMPEZAR</button>
+        <button id="btn-reset" class="btn-action" onclick="location.reload()">REINICIAR</button>
     </div>
 </div>
 
@@ -114,6 +93,13 @@
 </div>
 
 <script>
+    /** 
+     * CONFIGURACIÓN IMPORTANTE 
+     * Cambia estos dos valores para que el juego encuentre tus fotos:
+     */
+    const GITHUB_USER = "mingorance33"; 
+    const GITHUB_REPO = "AdivinaLaPelicula";
+
     let deck = [];
     let currentIdx = 0;
     let points = 100;
@@ -124,39 +110,48 @@
     const img = document.getElementById('movie-img');
     const pointsTxt = document.getElementById('points-label');
     const mainBtn = document.getElementById('btn-main');
-    const folderInput = document.getElementById('folderInput');
+    const statusMsg = document.getElementById('status-msg');
 
-    // LÓGICA DE CARGA AUTOMÁTICA
-    folderInput.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
-        // Filtramos solo archivos JPG o PNG
-        const imageFiles = files.filter(file => 
-            file.name.toLowerCase().endsWith('.jpg') || 
-            file.name.toLowerCase().endsWith('.jpeg') || 
-            file.name.toLowerCase().endsWith('.png')
-        );
+    // Función para leer archivos del repo vía API de GitHub
+    async function loadFilesFromGitHub() {
+        const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/`;
+        
+        try {
+            const response = await fetch(url);
+            const files = await response.json();
+            
+            // Filtramos solo los archivos JPG, PNG o JPEG
+            deck = files
+                .filter(file => {
+                    const name = file.name.toLowerCase();
+                    return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
+                })
+                .map(file => ({
+                    name: file.name.split('.')[0].replace(/-/g, ' ').replace(/_/g, ' '),
+                    url: file.download_url // URL directa de la imagen en GitHub
+                }))
+                .sort(() => Math.random() - 0.5); // Mezclar
 
-        if (imageFiles.length === 0) {
-            alert("No se encontraron imágenes JPG en esa carpeta.");
-            return;
+            if (deck.length > 0) {
+                statusMsg.innerText = `¡${deck.length} películas cargadas!`;
+                mainBtn.style.display = 'block';
+            } else {
+                statusMsg.innerText = "No se encontraron JPGs en la carpeta raíz.";
+            }
+        } catch (error) {
+            statusMsg.innerText = "Error al conectar con GitHub. Revisa el usuario y repo.";
+            console.error(error);
         }
-
-        // Creamos la lista de películas automáticamente basada en el nombre del archivo
-        deck = imageFiles.map(file => ({
-            name: file.name.split('.')[0].replace(/-/g, ' ').replace(/_/g, ' '), // Quitamos la extensión y guiones
-            url: URL.createObjectURL(file) // Creamos una URL temporal para mostrarla
-        })).sort(() => Math.random() - 0.5); // Mezclamos
-
-        document.getElementById('setup-screen').style.display = 'none';
-    });
+    }
 
     function nextRound() {
         if (currentIdx >= deck.length) {
-            alert("¡Has terminado todas las películas!");
+            alert("¡Fin de la lista!");
             location.reload();
             return;
         }
         
+        statusMsg.style.display = 'none';
         img.style.display = 'block';
         img.src = deck[currentIdx].url;
         img.style.filter = "blur(60px)";
@@ -218,6 +213,9 @@
     function setStops(on) {
         for(let i=1; i<=4; i++) document.getElementById(`stop${i}`).disabled = !on;
     }
+
+    // Arrancamos la carga al abrir la web
+    loadFilesFromGitHub();
 </script>
 </body>
 </html>
