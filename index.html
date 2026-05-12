@@ -3,53 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adivina la Película - Kids Edition</title>
+    <title>Adivina la Película Infantil</title>
     <style>
         :root {
-            --p1: #ff4757; --p2: #2e86de; --p3: #2ed573; --p4: #ffa502;
+            --p1: #ff4757; /* Rojo */
+            --p2: #2e86de; /* Azul */
+            --p3: #2ed573; /* Verde */
+            --p4: #ffa502; /* Naranja */
+            --bg: #2f3542;
         }
+
         body {
-            font-family: 'Arial Rounded MT Bold', sans-serif;
-            background: #2f3542; color: white; text-align: center; margin: 0; overflow: hidden;
+            font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', sans-serif;
+            background: var(--bg);
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Ocupa todo el alto de la pantalla */
+            overflow: hidden; /* Evita scrolls innecesarios */
         }
+
+        /* --- MARCADOR --- */
         #scoreboard {
-            display: flex; justify-content: space-around; background: #1e2227; padding: 15px;
+            display: flex;
+            justify-content: space-around;
+            background: rgba(0,0,0,0.3);
+            padding: 10px 0;
+            flex-shrink: 0; /* No se encoge */
         }
-        .score-box { padding: 10px 20px; border-radius: 10px; min-width: 100px; }
+
+        .score-box {
+            padding: 5px 15px;
+            border-radius: 15px;
+            min-width: 80px;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
         .p1 { background: var(--p1); } .p2 { background: var(--p2); }
         .p3 { background: var(--p3); } .p4 { background: var(--p4); }
 
-        #game-container { margin-top: 20px; position: relative; }
-        
+        /* --- ÁREA CENTRAL DEL JUEGO --- */
+        #game-area {
+            flex-grow: 1; /* Ocupa todo el espacio disponible entre marcador y botones */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+        }
+
+        #points-display {
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            color: #f1c40f;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+        }
+
+        #image-container {
+            flex-grow: 1; /* El contenedor de la imagen crece para ocupar el espacio */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-height: 60vh; /* Limita la altura máxima de la imagen */
+        }
+
         #movie-img {
-            width: 400px; height: 550px; object-fit: cover;
-            border: 8px solid white; border-radius: 15px;
-            filter: blur(50px); /* Inicialmente muy borroso */
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Asegura que la imagen se vea entera sin deformarse */
+            border: 8px solid white;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            filter: blur(50px);
             transition: filter 0.1s linear;
         }
 
-        #points-display { font-size: 3rem; margin: 10px; color: #f1c40f; }
-
-        .controls { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 400px; margin: 20px auto; }
-        
-        button {
-            padding: 15px; border: none; border-radius: 10px; color: white;
-            font-weight: bold; cursor: pointer; font-size: 1.2rem; transition: 0.2s;
+        /* Mensaje de Fin de Juego */
+        #end-game-message {
+            display: none;
+            font-size: 3rem;
+            color: #f1c40f;
         }
-        button:active { transform: scale(0.95); }
-        .btn-stop { height: 80px; }
-        #btn-main { background: #747d8c; width: 200px; font-size: 1.5rem; margin-top: 20px;}
 
-        /* Modal para verificar acierto */
+        /* --- ÁREA DE BOTONES INFERIORES --- */
+        #controls-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Dos columnas */
+            grid-template-rows: auto auto; /* Dos filas (botones ALTO y botón acción) */
+            gap: 10px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            flex-shrink: 0; /* No se encoge */
+        }
+
+        /* Botones de ALTO */
+        .btn-stop {
+            height: 70px;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        /* Área para los botones de acción centrales (Empezar/Siguiente/Reiniciar) */
+        #action-buttons-container {
+            grid-column: 1 / -1; /* Ocupa las dos columnas */
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        button {
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            background-color: #747d8c !important;
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Botones de acción principales */
+        .btn-action {
+            width: 200px;
+            font-size: 1.3rem;
+        }
+        #btn-main { background: #2ed573; }
+        #btn-restart { background: #747d8c; }
+
+        /* --- MODAL PARA VERIFICAR ACIERTO --- */
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+        }
+
         #modal {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: white; color: black; padding: 30px; border-radius: 20px; z-index: 10;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: black;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            width: 300px;
+            text-align: center;
+        }
+
+        #modal h2 { margin-top: 0; color: #2f3542; }
+        #movie-name-display {
+            font-size: 1.5rem;
+            color: #2e86de;
+            display: block;
+            margin: 15px 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
+<!-- 1. Marcador Superior -->
 <div id="scoreboard">
     <div class="score-box p1">P1: <span id="s1">0</span></div>
     <div class="score-box p2">P2: <span id="s2">0</span></div>
@@ -57,31 +197,44 @@
     <div class="score-box p4">P4: <span id="s4">0</span></div>
 </div>
 
-<div id="points-display">PUNTOS: 100</div>
-
-<div id="game-container">
-    <img id="movie-img" src="" alt="Portada">
+<!-- 2. Área Central (Imagen y Puntos) -->
+<div id="game-area">
+    <div id="points-display">PUNTOS: 100</div>
+    <div id="image-container">
+        <img id="movie-img" src="" alt="Portada Película" style="display: none;">
+        <div id="end-game-message">¡FIN DEL JUEGO!</div>
+    </div>
 </div>
 
-<div class="controls">
-    <button class="btn-stop p1" onclick="stopGame(1)">ALTO P1</button>
-    <button class="btn-stop p2" onclick="stopGame(2)">ALTO P2</button>
-    <button class="btn-stop p3" onclick="stopGame(3)">ALTO P3</button>
-    <button class="btn-stop p4" onclick="stopGame(4)">ALTO P4</button>
+<!-- 3. Área de Controles Inferiores -->
+<div id="controls-area">
+    <button class="btn-stop p1" id="btn-stop-1" onclick="stopGame(1)" disabled>ALTO P1</button>
+    <button class="btn-stop p2" id="btn-stop-2" onclick="stopGame(2)" disabled>ALTO P2</button>
+    <button class="btn-stop p3" id="btn-stop-3" onclick="stopGame(3)" disabled>ALTO P3</button>
+    <button class="btn-stop p4" id="btn-stop-4" onclick="stopGame(4)" disabled>ALTO P4</button>
+
+    <div id="action-buttons-container">
+        <button id="btn-main" class="btn-action" onclick="startGameAction()">EMPEZAR</button>
+        <button id="btn-restart" class="btn-action" onclick="restartGame()" style="display:none;">REINICIAR JUEGO</button>
+    </div>
 </div>
 
-<button id="btn-main" onclick="nextRound()">EMPEZAR</button>
-
-<div id="modal">
-    <h2 id="modal-title">¿Acertó el Jugador?</h2>
-    <p>Nombre de la película: <strong id="movie-name">---</strong></p>
-    <button style="background: #2ed573;" onclick="verify(true)">SÍ, PUNTO!</button>
-    <button style="background: #ff4757;" onclick="verify(false)">NO, CONTINUAR</button>
+<!-- Modal de Acierto -->
+<div id="modal-overlay">
+    <div id="modal">
+        <h2 id="modal-title">¿Acertó el Jugador <span id="active-player-num"></span>?</h2>
+        <p>Nombre de la película:</p>
+        <strong id="movie-name-display">---</strong>
+        <div class="modal-buttons">
+            <button style="background: #2ed573; width: 45%;" onclick="verify(true)">SÍ 👍</button>
+            <button style="background: #ff4757; width: 45%;" onclick="verify(false)">NO 👎</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    // --- CONFIGURACIÓN DE PELÍCULAS ---
-    // Reemplaza estos nombres con los nombres de tus archivos de imagen
+    // --- BIBLIOTECA DE PELÍCULAS ---
+    // ¡RECUERDA TENER ESTAS IMÁGENES EN LA MISMA CARPETA!
     const movieLibrary = [
         { name: "Toy Story", img: "toystory.jpg" },
         { name: "Frozen", img: "frozen.jpg" },
@@ -91,94 +244,178 @@
         { name: "Cars", img: "cars.jpg" }
     ];
 
-    let currentMovies = [...movieLibrary];
+    // Variables de estado del juego
+    let currentMovies = [];
     let currentIdx = 0;
     let points = 100;
     let timer = null;
     let activePlayer = null;
     let scores = [0, 0, 0, 0];
+    let gameStatus = 'idle'; // idle, playing, stopped, finished
 
+    // Elementos del DOM
     const imgEl = document.getElementById('movie-img');
     const pointsEl = document.getElementById('points-display');
-    const modal = document.getElementById('modal');
+    const modalEl = document.getElementById('modal-overlay');
+    const btnMainEl = document.getElementById('btn-main');
+    const btnRestartEl = document.getElementById('btn-restart');
+    const endGameMsgEl = document.getElementById('end-game-message');
+    const stopButtons = [
+        document.getElementById('btn-stop-1'),
+        document.getElementById('btn-stop-2'),
+        document.getElementById('btn-stop-3'),
+        document.getElementById('btn-stop-4')
+    ];
 
-    // Mezclar películas al inicio
-    function shuffle() {
-        currentMovies.sort(() => Math.random() - 0.5);
+    // Función para mezclar el array de películas (Fisher-Yates shuffle)
+    function shuffleMovies() {
+        currentMovies = [...movieLibrary];
+        for (let i = currentMovies.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [currentMovies[i], currentMovies[j]] = [currentMovies[j], currentMovies[i]];
+        }
     }
-    shuffle();
 
-    function nextRound() {
+    // Acción principal: Empezar o Siguiente
+    function startGameAction() {
+        if (gameStatus === 'idle') {
+            // Primera vez que se juega
+            shuffleMovies();
+            currentIdx = 0;
+            scores = [0, 0, 0, 0];
+            updateScoreboard();
+            endGameMsgEl.style.display = 'none';
+            imgEl.style.display = 'block';
+            loadRound();
+        } else if (gameStatus === 'correct' || gameStatus === 'timeout') {
+            // Siguiente ronda
+            currentIdx++;
+            loadRound();
+        }
+    }
+
+    // Carga una nueva ronda
+    function loadRound() {
         if (currentIdx >= currentMovies.length) {
-            alert("¡Fin del juego!");
-            location.reload();
+            endGame();
             return;
         }
-        
-        // Reset de estado
+
+        // Reset de estado de la ronda
         points = 100;
+        activePlayer = null;
         pointsEl.innerText = `PUNTOS: ${points}`;
         imgEl.src = currentMovies[currentIdx].img;
         imgEl.style.filter = "blur(50px)";
-        document.getElementById('btn-main').style.display = 'none';
         
-        startTimer();
+        // UI
+        btnMainEl.style.display = 'none';
+        btnRestartEl.style.display = 'none';
+        
+        // Carga la imagen antes de empezar el timer
+        imgEl.onload = function() {
+            gameStatus = 'playing';
+            toggleStopButtons(true);
+            startTimer();
+        }
     }
 
+    // Temporizador: baja puntos y quita blur
     function startTimer() {
         clearInterval(timer);
         timer = setInterval(() => {
             if (points > 0) {
                 points--;
                 pointsEl.innerText = `PUNTOS: ${points}`;
-                // Reducir desenfoque proporcionalmente
-                let blurVal = (points / 2); // De 50px a 0px
+                // El blur baja de 50px a 0px en función de los puntos
+                let blurVal = (points / 2);
                 imgEl.style.filter = `blur(${blurVal}px)`;
             } else {
+                // Se acabaron los puntos
                 clearInterval(timer);
-                revealMovie();
+                gameStatus = 'timeout';
+                toggleStopButtons(false);
+                imgEl.style.filter = "blur(0px)"; // Revelar del todo
+                btnMainEl.innerText = "SIGUIENTE PELÍCULA";
+                btnMainEl.style.display = 'inline-block';
+                btnRestartEl.style.display = 'inline-block'; // Permite reiniciar en cualquier momento
             }
-        }, 150); // Velocidad de la ronda (aprox 15 seg para llegar a 0)
+        }, 150); // Velocidad: aprox 15 segundos por película
     }
 
+    // Un jugador pulsa ALTO
     function stopGame(player) {
-        if (!timer) return;
+        if (gameStatus !== 'playing') return;
         clearInterval(timer);
+        gameStatus = 'stopped';
+        toggleStopButtons(false);
         activePlayer = player;
-        document.getElementById('movie-name').innerText = currentMovies[currentIdx].name;
-        modal.style.display = 'block';
+        
+        // Mostrar Modal
+        document.getElementById('active-player-num').innerText = player;
+        document.getElementById('movie-name-display').innerText = currentMovies[currentIdx].name;
+        modalEl.style.display = 'block';
     }
 
+    // Verificación del modal (SÍ/NO)
     function verify(correct) {
-        modal.style.display = 'none';
+        modalEl.style.display = 'none';
+        
         if (correct) {
+            // Acierto
             scores[activePlayer - 1] += points;
             updateScoreboard();
-            revealMovie();
-            document.getElementById('btn-main').innerText = "SIGUIENTE";
-            document.getElementById('btn-main').style.display = 'inline-block';
-            currentIdx++;
-            timer = null;
+            imgEl.style.filter = "blur(0px)"; // Revelar
+            gameStatus = 'correct';
+            btnMainEl.innerText = "SIGUIENTE PELÍCULA";
+            btnMainEl.style.display = 'inline-block';
+            btnRestartEl.style.display = 'inline-block';
         } else {
-            // Continúa donde se quedó
+            // Fallo: Continua el juego
+            gameStatus = 'playing';
+            toggleStopButtons(true);
             startTimer();
         }
     }
 
-    function revealMovie() {
-        imgEl.style.filter = "blur(0px)";
-        if (points === 0) {
-             document.getElementById('btn-main').innerText = "SIGUIENTE";
-             document.getElementById('btn-main').style.display = 'inline-block';
-             currentIdx++;
+    // Fin de las películas
+    function endGame() {
+        gameStatus = 'finished';
+        clearInterval(timer);
+        imgEl.style.display = 'none';
+        pointsEl.innerText = "";
+        endGameMsgEl.style.display = 'block';
+        btnMainEl.style.display = 'none';
+        btnRestartEl.innerText = "JUGAR DE NUEVO";
+        btnRestartEl.style.display = 'inline-block';
+        toggleStopButtons(false);
+    }
+
+    // Reiniciar todo el juego
+    function restartGame() {
+        clearInterval(timer);
+        gameStatus = 'idle';
+        btnMainEl.innerText = "EMPEZAR JUEGO";
+        btnMainEl.style.display = 'inline-block';
+        btnRestartEl.style.display = 'none';
+        imgEl.style.display = 'none';
+        imgEl.src = "";
+        pointsEl.innerText = "PUNTOS: 100";
+        endGameMsgEl.style.display = 'none';
+        scores = [0, 0, 0, 0];
+        updateScoreboard();
+        toggleStopButtons(false);
+    }
+
+    // Helpers UI
+    function updateScoreboard() {
+        for(let i=0; i<4; i++) {
+            document.getElementById(`s${i+1}`).innerText = scores[i];
         }
     }
 
-    function updateScoreboard() {
-        document.getElementById('s1').innerText = scores[0];
-        document.getElementById('s2').innerText = scores[1];
-        document.getElementById('s3').innerText = scores[2];
-        document.getElementById('s4').innerText = scores[3];
+    function toggleStopButtons(enable) {
+        stopButtons.forEach(btn => btn.disabled = !enable);
     }
 </script>
 
