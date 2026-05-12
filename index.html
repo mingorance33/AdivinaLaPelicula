@@ -3,149 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adivina la Película - 4 Jugadores</title>
+    <title>Juego: Adivina la Película</title>
     <style>
         :root {
             --p1: #ff4757; --p2: #2e86de; --p3: #2ed573; --p4: #ffa502;
             --bg: #1e272e;
         }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg);
-            color: white;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg); color: white; margin: 0;
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
 
         /* --- MARCADOR --- */
         #scoreboard {
-            display: flex;
-            justify-content: space-around;
-            padding: 15px;
-            background: rgba(0,0,0,0.4);
+            display: flex; justify-content: space-around; padding: 10px; background: rgba(0,0,0,0.5);
         }
-        .score-box {
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: bold;
-            min-width: 80px;
-            text-align: center;
-        }
+        .score-box { padding: 8px 15px; border-radius: 10px; font-weight: bold; min-width: 70px; text-align: center; }
 
         /* --- ZONA CENTRAL --- */
-        #main-display {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+        #game-view {
+            flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px;
         }
-
-        #points-label {
-            font-size: 3rem;
-            color: #f1c40f;
-            margin-bottom: 10px;
-            font-weight: 900;
+        #points-label { font-size: 3.5rem; color: #f1c40f; margin: 5px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+        
+        #image-container {
+            width: 90%; max-width: 400px; height: 50vh; border: 8px solid white;
+            border-radius: 20px; overflow: hidden; background: #2c3e50;
+            display: flex; align-items: center; justify-content: center; position: relative;
         }
-
-        #image-frame {
-            width: 100%;
-            max-width: 450px;
-            height: 60vh;
-            border: 10px solid white;
-            border-radius: 20px;
-            background: #3d3d3d;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        #movie-img {
-            max-width: 100%;
-            max-height: 100%;
-            filter: blur(50px);
-            transition: filter 0.1s linear;
-        }
-
-        #empty-msg {
-            position: absolute;
-            font-size: 1.2rem;
-            color: #aaa;
-        }
+        #movie-img { max-width: 100%; max-height: 100%; filter: blur(50px); display: none; }
+        #placeholder-text { color: #7f8c8d; font-style: italic; }
 
         /* --- CONTROLES --- */
-        #controls {
-            background: rgba(0,0,0,0.5);
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+        #controls-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; background: #00000044;
         }
-
         .btn-stop {
-            height: 80px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 15px;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 5px 0 rgba(0,0,0,0.3);
+            height: 65px; border: none; border-radius: 12px; color: white;
+            font-size: 1.2rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
         }
+        .btn-stop:active { transform: translateY(2px); box-shadow: none; }
+        .btn-stop:disabled { background: #4b4b4b !important; opacity: 0.5; cursor: not-allowed; }
 
-        .btn-stop:active { transform: translateY(3px); box-shadow: none; }
-        .btn-stop:disabled { background: #57606f !important; opacity: 0.5; cursor: default; }
-
-        #action-bar {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 10px;
+        #action-row {
+            grid-column: 1 / -1; display: flex; justify-content: center; gap: 15px; margin-top: 5px;
         }
-
         .btn-action {
-            padding: 15px 40px;
-            font-size: 1.2rem;
-            border: none;
-            border-radius: 50px;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
+            padding: 12px 30px; font-size: 1.1rem; border: none; border-radius: 50px;
+            color: white; cursor: pointer; font-weight: bold;
         }
-
-        #btn-start { background: #2ed573; }
-        #btn-reset { background: #ff7f50; }
+        #btn-main { background: #2ed573; min-width: 150px; }
+        #btn-reset { background: #ff4757; }
 
         /* --- MODAL --- */
         #modal-overlay {
-            display: none;
-            position: fixed;
-            top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.9); z-index: 999; justify-content: center; align-items: center;
         }
-
-        #modal {
-            background: white;
-            color: black;
-            padding: 40px;
-            border-radius: 25px;
-            text-align: center;
-            max-width: 80%;
-        }
-
-        .modal-btns { display: flex; gap: 20px; margin-top: 30px; justify-content: center; }
-        .modal-btns button { padding: 15px 30px; font-size: 1.1rem; border: none; border-radius: 10px; color: white; font-weight: bold; }
+        #modal { background: white; color: black; padding: 30px; border-radius: 20px; text-align: center; width: 280px; }
+        .modal-btns { display: flex; gap: 15px; margin-top: 20px; justify-content: center; }
+        .modal-btns button { padding: 12px 20px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -157,153 +76,168 @@
     <div class="score-box" style="background: var(--p4)">P4: <span id="s4">0</span></div>
 </div>
 
-<div id="main-display">
+<div id="game-view">
     <div id="points-label">100</div>
-    <div id="image-frame">
-        <div id="empty-msg">Dale a EMPEZAR</div>
-        <img id="movie-img" src="" style="display:none">
+    <div id="image-container">
+        <span id="placeholder-text">Presiona EMPEZAR</span>
+        <img id="movie-img" src="" alt="Peli">
     </div>
 </div>
 
-<div id="controls">
-    <button class="btn-stop" style="background: var(--p1)" onclick="triggerStop(1)" id="stop1" disabled>ALTO P1</button>
-    <button class="btn-stop" style="background: var(--p2)" onclick="triggerStop(2)" id="stop2" disabled>ALTO P2</button>
-    <button class="btn-stop" style="background: var(--p3)" onclick="triggerStop(3)" id="stop3" disabled>ALTO P3</button>
-    <button class="btn-stop" style="background: var(--p4)" onclick="triggerStop(4)" id="stop4" disabled>ALTO P4</button>
+<div id="controls-grid">
+    <button class="btn-stop" style="background: var(--p1)" onclick="playerStop(1)" id="stop1" disabled>ALTO P1</button>
+    <button class="btn-stop" style="background: var(--p2)" onclick="playerStop(2)" id="stop2" disabled>ALTO P2</button>
+    <button class="btn-stop" style="background: var(--p3)" onclick="playerStop(3)" id="stop3" disabled>ALTO P3</button>
+    <button class="btn-stop" style="background: var(--p4)" onclick="playerStop(4)" id="stop4" disabled>ALTO P4</button>
 
-    <div id="action-bar">
-        <button id="btn-start" class="btn-action" onclick="handleStart()">EMPEZAR</button>
-        <button id="btn-reset" class="btn-action" onclick="resetGame()">REINICIAR</button>
+    <div id="action-row">
+        <button id="btn-main" class="btn-action" onclick="handleMainAction()">EMPEZAR</button>
+        <button id="btn-reset" class="btn-action" onclick="restartEverything()">REINICIAR TODO</button>
     </div>
 </div>
 
 <div id="modal-overlay">
     <div id="modal">
-        <h1 id="modal-msg">¿Acertaste?</h1>
-        <h2 id="movie-name" style="color: #2e86de">---</h2>
+        <h2 id="modal-player-title">¿Acertó el Jugador?</h2>
+        <h3 id="correct-name" style="color: #2e86de">---</h3>
         <div class="modal-btns">
-            <button style="background: #2ed573" onclick="confirmPoint(true)">SÍ, PUNTO</button>
-            <button style="background: #ff4757" onclick="confirmPoint(false)">NO, SIGUE</button>
+            <button style="background: #2ed573" onclick="resolveModal(true)">SÍ ✅</button>
+            <button style="background: #ff4757" onclick="resolveModal(false)">NO ❌</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- LISTA DE PELÍCULAS (Puedes cambiar las URLs por tus archivos) ---
-    const library = [
-        { name: "TOY STORY", url: "https://m.media-amazon.com/images/I/71K9XyS9sRL._AC_SL1000_.jpg" },
-        { name: "FROZEN", url: "https://m.media-amazon.com/images/I/717S+ZzO9HL._AC_SL1000_.jpg" },
-        { name: "EL REY LEON", url: "https://m.media-amazon.com/images/I/81BInp-tXvL._AC_SL1500_.jpg" },
-        { name: "SHREK", url: "https://m.media-amazon.com/images/I/516WPCVCH9L._AC_.jpg" },
-        { name: "MOANA", url: "https://m.media-amazon.com/images/I/91p6Yf8EjtL._AC_SL1500_.jpg" }
+    // --- LISTA DE PELÍCULAS ---
+    // (Cambia estas URLs por tus archivos locales cuando los tengas)
+    const movieData = [
+        { name: "TOY STORY", url: "https://picsum.photos/id/10/400/600" },
+        { name: "FROZEN", url: "https://picsum.photos/id/20/400/600" },
+        { name: "EL REY LEON", url: "https://picsum.photos/id/30/400/600" },
+        { name: "SHREK", url: "https://picsum.photos/id/40/400/600" },
+        { name: "CARS", url: "https://picsum.photos/id/50/400/600" }
     ];
 
-    let movies = [];
-    let currentIdx = 0;
+    let deck = [];
+    let currentIndex = 0;
     let points = 100;
-    let timer = null;
-    let activePlayer = 0;
-    let scores = [0, 0, 0, 0];
+    let gameTimer = null;
+    let currentPlayer = null;
+    let playerScores = [0, 0, 0, 0];
 
-    const img = document.getElementById('movie-img');
-    const pointsText = document.getElementById('points-label');
-    const startBtn = document.getElementById('btn-start');
+    const imgElement = document.getElementById('movie-img');
+    const mainBtn = document.getElementById('btn-main');
+    const pointsDisplay = document.getElementById('points-label');
+    const placeholder = document.getElementById('placeholder-text');
 
+    // Mezclar al inicio
     function shuffle() {
-        movies = [...library].sort(() => Math.random() - 0.5);
+        deck = [...movieData].sort(() => Math.random() - 0.5);
     }
 
-    function handleStart() {
-        if (movies.length === 0 || currentIdx >= movies.length) {
+    function handleMainAction() {
+        if (deck.length === 0 || currentIndex >= deck.length) {
             shuffle();
-            currentIdx = 0;
+            currentIndex = 0;
         }
         startRound();
     }
 
     function startRound() {
-        document.getElementById('empty-msg').style.display = 'none';
-        img.style.display = 'block';
-        img.src = movies[currentIdx].url;
-        img.style.filter = "blur(50px)";
+        // Preparar UI
+        placeholder.style.display = 'none';
+        imgElement.style.display = 'block';
+        imgElement.src = deck[currentIndex].url;
+        imgElement.style.filter = "blur(50px)";
         
         points = 100;
-        pointsText.innerText = points;
+        pointsDisplay.innerText = points;
         
-        startBtn.style.display = 'none';
-        setStops(true);
+        mainBtn.style.visibility = 'hidden'; // Escondemos para que no se pulse dos veces
+        toggleStopButtons(true);
         
-        runTimer();
-    }
-
-    function runTimer() {
-        clearInterval(timer);
-        timer = setInterval(() => {
+        // Iniciar cuenta atrás
+        if (gameTimer) clearInterval(gameTimer);
+        gameTimer = setInterval(() => {
             if (points > 0) {
                 points--;
-                pointsText.innerText = points;
-                img.style.filter = `blur(${points / 2}px)`;
+                pointsDisplay.innerText = points;
+                imgElement.style.filter = `blur(${points / 2}px)`;
             } else {
-                clearInterval(timer);
-                reveal();
+                finishRound();
             }
-        }, 150);
+        }, 150); // 15 segundos aprox por peli
     }
 
-    function triggerStop(player) {
-        clearInterval(timer);
-        activePlayer = player;
-        setStops(false);
-        document.getElementById('movie-name').innerText = movies[currentIdx].name;
+    function playerStop(num) {
+        clearInterval(gameTimer);
+        currentPlayer = num;
+        toggleStopButtons(false);
+        
+        document.getElementById('modal-player-title').innerText = `¿Acertó Jugador ${num}?`;
+        document.getElementById('correct-name').innerText = deck[currentIndex].name;
         document.getElementById('modal-overlay').style.display = 'flex';
     }
 
-    function confirmPoint(isCorrect) {
+    function resolveModal(isCorrect) {
         document.getElementById('modal-overlay').style.display = 'none';
         if (isCorrect) {
-            scores[activePlayer - 1] += points;
-            updateScores();
-            reveal();
+            playerScores[currentPlayer - 1] += points;
+            updateScoreUI();
+            finishRound();
         } else {
-            setStops(true);
-            runTimer();
+            // Continua el tiempo
+            toggleStopButtons(true);
+            gameTimer = setInterval(() => {
+                if (points > 0) {
+                    points--;
+                    pointsDisplay.innerText = points;
+                    imgElement.style.filter = `blur(${points / 2}px)`;
+                } else {
+                    finishRound();
+                }
+            }, 150);
         }
     }
 
-    function reveal() {
-        img.style.filter = "blur(0px)";
-        currentIdx++;
-        startBtn.style.display = 'block';
-        startBtn.innerText = currentIdx < movies.length ? "SIGUIENTE" : "FIN (REPETIR)";
+    function finishRound() {
+        clearInterval(gameTimer);
+        imgElement.style.filter = "blur(0px)";
+        currentIndex++;
+        
+        mainBtn.style.visibility = 'visible';
+        mainBtn.innerText = currentIndex < deck.length ? "SIGUIENTE" : "VER RESULTADOS";
+        toggleStopButtons(false);
     }
 
-    function resetGame() {
-        clearInterval(timer);
-        scores = [0, 0, 0, 0];
-        updateScores();
-        currentIdx = 0;
+    function restartEverything() {
+        clearInterval(gameTimer);
+        playerScores = [0, 0, 0, 0];
+        updateScoreUI();
+        currentIndex = 0;
         shuffle();
-        img.style.display = 'none';
-        document.getElementById('empty-msg').style.display = 'block';
-        startBtn.style.display = 'block';
-        startBtn.innerText = "EMPEZAR";
-        pointsText.innerText = "100";
-        setStops(false);
+        
+        placeholder.style.display = 'block';
+        imgElement.style.display = 'none';
+        mainBtn.style.visibility = 'visible';
+        mainBtn.innerText = "EMPEZAR";
+        pointsDisplay.innerText = "100";
+        toggleStopButtons(false);
     }
 
-    function updateScores() {
-        scores.forEach((s, i) => {
-            document.getElementById(`s${i+1}`).innerText = s;
+    function updateScoreUI() {
+        playerScores.forEach((score, i) => {
+            document.getElementById(`s${i+1}`).innerText = score;
         });
     }
 
-    function setStops(enabled) {
+    function toggleStopButtons(active) {
         for(let i=1; i<=4; i++) {
-            document.getElementById(`stop${i}`).disabled = !enabled;
+            document.getElementById(`stop${i}`).disabled = !active;
         }
     }
 
-    // Mezclar al cargar por primera vez
+    // Inicializar
     shuffle();
 </script>
 
