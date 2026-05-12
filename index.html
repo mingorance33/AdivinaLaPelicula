@@ -29,7 +29,8 @@
             display: flex; align-items: center; justify-content: center; overflow: hidden;
             position: relative;
         }
-        #movie-img { width: 100%; height: 100%; object-fit: contain; filter: blur(60px); display: none; }
+        /* Ajustado: el blur inicial es más suave */
+        #movie-img { width: 100%; height: 100%; object-fit: contain; filter: blur(30px); display: none; }
         #status-msg { font-size: 1.2rem; color: #aaa; text-align: center; padding: 20px; }
 
         /* Controles */
@@ -95,10 +96,10 @@
 <script>
     /** 
      * CONFIGURACIÓN IMPORTANTE 
-     * Cambia estos dos valores para que el juego encuentre tus fotos:
+     * Pon aquí tus datos de GitHub
      */
-    const GITHUB_USER = "mingorance33"; 
-    const GITHUB_REPO = "AdivinaLaPelicula";
+    const GITHUB_USER = "TU_USUARIO"; 
+    const GITHUB_REPO = "TU_REPO";
 
     let deck = [];
     let currentIdx = 0;
@@ -112,15 +113,11 @@
     const mainBtn = document.getElementById('btn-main');
     const statusMsg = document.getElementById('status-msg');
 
-    // Función para leer archivos del repo vía API de GitHub
     async function loadFilesFromGitHub() {
         const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/`;
-        
         try {
             const response = await fetch(url);
             const files = await response.json();
-            
-            // Filtramos solo los archivos JPG, PNG o JPEG
             deck = files
                 .filter(file => {
                     const name = file.name.toLowerCase();
@@ -128,25 +125,24 @@
                 })
                 .map(file => ({
                     name: file.name.split('.')[0].replace(/-/g, ' ').replace(/_/g, ' '),
-                    url: file.download_url // URL directa de la imagen en GitHub
+                    url: file.download_url
                 }))
-                .sort(() => Math.random() - 0.5); // Mezclar
+                .sort(() => Math.random() - 0.5);
 
             if (deck.length > 0) {
-                statusMsg.innerText = `¡${deck.length} películas cargadas!`;
+                statusMsg.innerText = `¡${deck.length} películas listas!`;
                 mainBtn.style.display = 'block';
             } else {
-                statusMsg.innerText = "No se encontraron JPGs en la carpeta raíz.";
+                statusMsg.innerText = "No hay imágenes en la carpeta raíz.";
             }
-        } catch (error) {
-            statusMsg.innerText = "Error al conectar con GitHub. Revisa el usuario y repo.";
-            console.error(error);
+        } catch (e) {
+            statusMsg.innerText = "Error de conexión. Revisa configuración.";
         }
     }
 
     function nextRound() {
         if (currentIdx >= deck.length) {
-            alert("¡Fin de la lista!");
+            alert("¡Fin del juego!");
             location.reload();
             return;
         }
@@ -154,7 +150,9 @@
         statusMsg.style.display = 'none';
         img.style.display = 'block';
         img.src = deck[currentIdx].url;
-        img.style.filter = "blur(60px)";
+        
+        // --- AQUÍ EL CAMBIO: Blur inicial de 30px ---
+        img.style.filter = "blur(30px)";
         
         points = 100;
         pointsTxt.innerText = points;
@@ -169,7 +167,9 @@
             if (points > 0) {
                 points--;
                 pointsTxt.innerText = points;
-                img.style.filter = `blur(${points / 1.5}px)`;
+                // --- AQUÍ EL CAMBIO: Fórmula ajustada para que baje desde 30px ---
+                let blurLevel = points / 3.33; 
+                img.style.filter = `blur(${blurLevel}px)`;
             } else {
                 finishRound();
             }
@@ -214,7 +214,6 @@
         for(let i=1; i<=4; i++) document.getElementById(`stop${i}`).disabled = !on;
     }
 
-    // Arrancamos la carga al abrir la web
     loadFilesFromGitHub();
 </script>
 </body>
