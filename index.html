@@ -33,7 +33,6 @@
         .btn-action { padding: 12px 30px; font-size: 1.1rem; border: none; border-radius: 50px; color: white; cursor: pointer; font-weight: bold; }
         #btn-main { background: #2ed573; min-width: 180px; }
         
-        /* Modal mejorado para 3 botones */
         #modal-overlay {
             display: none; position: fixed; top:0; left:0; width:100%; height:100%;
             background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center;
@@ -41,15 +40,18 @@
         #modal { background: white; color: black; padding: 25px; border-radius: 25px; text-align: center; width: 320px; }
         .modal-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
         .modal-btns button { padding: 12px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+
+        /* Estilo para el mensaje final */
+        .winner-msg { color: #2e86de; font-size: 1.5rem; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div id="scoreboard">
-    <div class="score-box" style="background: var(--p1)">P1: <span id="s1">0</span></div>
-    <div class="score-box" style="background: var(--p2)">P2: <span id="s2">0</span></div>
-    <div class="score-box" style="background: var(--p3)">P3: <span id="s3">0</span></div>
-    <div class="score-box" style="background: var(--p4)">P4: <span id="s4">0</span></div>
+    <div class="score-box" id="box1" style="background: var(--p1)">P1: <span id="s1">0</span></div>
+    <div class="score-box" id="box2" style="background: var(--p2)">P2: <span id="s2">0</span></div>
+    <div class="score-box" id="box3" style="background: var(--p3)">P3: <span id="s3">0</span></div>
+    <div class="score-box" id="box4" style="background: var(--p4)">P4: <span id="s4">0</span></div>
 </div>
 
 <div id="game-view">
@@ -74,12 +76,16 @@
 
 <div id="modal-overlay">
     <div id="modal">
-        <h2>¿Acertó Jugador <span id="pl-num"></span>?</h2>
+        <h2 id="modal-title">¿Acertó Jugador <span id="pl-num"></span>?</h2>
         <h3 id="correct-name" style="color: #2e86de; text-transform: uppercase; margin: 10px 0;"></h3>
-        <div class="modal-btns">
+        <div id="winner-announcement"></div>
+        <div class="modal-btns" id="modal-buttons-div">
             <button style="background: #2ed573" onclick="confirm(true)">SÍ ✅</button>
             <button style="background: #ff4757" onclick="confirm(false)">NO ❌</button>
-            <button style="background: #7f8c8d" onclick="undoStop()">VOLVER (Error de dedo) ↩️</button>
+            <button style="background: #7f8c8d" onclick="undoStop()">VOLVER (Error) ↩️</button>
+        </div>
+        <div class="modal-btns" id="reset-button-div" style="display:none">
+            <button style="background: #2e86de" onclick="location.reload()">JUGAR OTRA VEZ 🎮</button>
         </div>
     </div>
 </div>
@@ -123,14 +129,13 @@
                 mainBtn.style.display = 'block';
             }
         } catch (e) {
-            statusMsg.innerHTML = `Error al conectar. Revisa configuración.`;
+            statusMsg.innerHTML = `Error al conectar con GitHub.`;
         }
     }
 
     function nextRound() {
         if (currentIdx >= deck.length) {
-            alert("¡Has terminado todas las películas!");
-            location.reload();
+            showFinalWinner();
             return;
         }
         statusMsg.style.display = 'none';
@@ -167,17 +172,16 @@
         document.getElementById('modal-overlay').style.display = 'flex';
     }
 
-    // FUNCIÓN PARA VOLVER ATRÁS
     function undoStop() {
         document.getElementById('modal-overlay').style.display = 'none';
         activePlayer = null;
         setStops(true);
-        startTimer(); // Reanuda la cuenta y el desenfoque
+        startTimer();
     }
 
     function confirm(correct) {
         document.getElementById('modal-overlay').style.display = 'none';
-        if (correct) {
+        if (correct && activePlayer) {
             scores[activePlayer - 1] += points;
             updateScores();
         } 
@@ -188,9 +192,37 @@
         clearInterval(timer);
         img.style.filter = "blur(0px)";
         currentIdx++;
-        mainBtn.style.visibility = 'visible';
-        mainBtn.innerText = "SIGUIENTE";
-        setStops(false);
+        
+        if (currentIdx >= deck.length) {
+            showFinalWinner();
+        } else {
+            mainBtn.style.visibility = 'visible';
+            mainBtn.innerText = "SIGUIENTE";
+            setStops(false);
+        }
+    }
+
+    function showFinalWinner() {
+        const maxScore = Math.max(...scores);
+        const winners = [];
+        scores.forEach((s, i) => { if(s === maxScore) winners.push(i + 1); });
+
+        let mensaje = "";
+        if (maxScore === 0) {
+            mensaje = "¡Nadie ha conseguido puntos! 😅";
+        } else if (winners.length === 1) {
+            mensaje = `¡EL GANADOR ES EL JUGADOR ${winners[0]}! 🏆`;
+        } else {
+            mensaje = `¡EMPATE entre los jugadores: ${winners.join(", ")}! 🤝`;
+        }
+
+        document.getElementById('modal-title').innerText = "¡FIN DEL JUEGO!";
+        document.getElementById('correct-name').innerText = "Resultados Finales";
+        document.getElementById('winner-announcement').innerHTML = `<div class="winner-msg">${mensaje}</div>`;
+        
+        document.getElementById('modal-buttons-div').style.display = 'none';
+        document.getElementById('reset-button-div').style.display = 'flex';
+        document.getElementById('modal-overlay').style.display = 'flex';
     }
 
     function updateScores() {
