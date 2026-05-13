@@ -91,7 +91,7 @@
             <p>Se perderán todos los puntos acumulados.</p>
             <div class="modal-btns">
                 <button style="background: #ff4757" onclick="location.reload()">SÍ, REINICIAR 🔄</button>
-                <button style="background: #7f8c8d" onclick="closeModal()">CANCELAR</button>
+                <button style="background: #7f8c8d" onclick="closeResetModal()">CANCELAR</button>
             </div>
         </div>
 
@@ -111,6 +111,7 @@
     let timer = null;
     let activePlayer = null;
     let scores = [0, 0, 0, 0];
+    let isGameOver = false;
 
     const img = document.getElementById('movie-img');
     const pointsTxt = document.getElementById('points-label');
@@ -118,22 +119,27 @@
     const statusMsg = document.getElementById('status-msg');
     const overlay = document.getElementById('modal-overlay');
 
-    // Función para pedir reinicio (abre el modal)
     function askReset() {
-        clearInterval(timer); // Pausamos el tiempo mientras decide
+        if(isGameOver) { location.reload(); return; }
+        
+        clearInterval(timer);
         document.getElementById('modal-content-game').style.display = 'none';
         document.getElementById('reset-button-div').style.display = 'none';
         document.getElementById('modal-content-reset').style.display = 'block';
         overlay.style.display = 'flex';
     }
 
-    function closeModal() {
-        overlay.style.display = 'none';
+    function closeResetModal() {
         document.getElementById('modal-content-reset').style.display = 'none';
-        document.getElementById('modal-content-game').style.display = 'block';
-        // Si el juego estaba en marcha (puntos > 0 y < 100), reanudamos
-        if (img.style.display === 'block' && activePlayer === null && points > 0) {
-            startTimer();
+        
+        if (activePlayer !== null) {
+            // Si alguien ya había pulsado ALTO, volvemos al modal de confirmación
+            document.getElementById('modal-content-game').style.display = 'block';
+        } else {
+            // Si no había nadie activo, cerramos el overlay y seguimos el tiempo
+            overlay.style.display = 'none';
+            document.getElementById('modal-content-game').style.display = 'block';
+            if (img.style.display === 'block' && points > 0) startTimer();
         }
     }
 
@@ -164,10 +170,7 @@
     }
 
     function nextRound() {
-        if (currentIdx >= deck.length) {
-            showFinalWinner();
-            return;
-        }
+        if (currentIdx >= deck.length) { showFinalWinner(); return; }
         statusMsg.style.display = 'none';
         img.style.display = 'block';
         img.src = deck[currentIdx].url;
@@ -175,6 +178,7 @@
         points = 100;
         pointsTxt.innerText = points;
         mainBtn.style.visibility = 'hidden';
+        activePlayer = null; 
         setStops(true);
         startTimer();
     }
@@ -212,7 +216,7 @@
 
     function confirmHit(correct) {
         overlay.style.display = 'none';
-        if (correct && activePlayer) {
+        if (correct && activePlayer !== null) {
             scores[activePlayer - 1] += points;
             updateScores();
         } 
@@ -221,9 +225,9 @@
 
     function finishRound() {
         clearInterval(timer);
-        activePlayer = null;
         img.style.filter = "blur(0px)";
         currentIdx++;
+        activePlayer = null; // Limpiamos el jugador activo para la siguiente ronda
         if (currentIdx >= deck.length) {
             showFinalWinner();
         } else {
@@ -234,6 +238,7 @@
     }
 
     function showFinalWinner() {
+        isGameOver = true;
         const maxScore = Math.max(...scores);
         const winners = [];
         scores.forEach((s, i) => { if(s === maxScore) winners.push(i + 1); });
