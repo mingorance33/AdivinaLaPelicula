@@ -40,8 +40,7 @@
         #modal { background: white; color: black; padding: 25px; border-radius: 25px; text-align: center; width: 320px; }
         .modal-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
         .modal-btns button { padding: 12px; border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
-
-        .winner-msg { color: #2e86de; font-size: 1.5rem; margin-top: 10px; }
+        .winner-msg { color: #2e86de; font-size: 1.5rem; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -82,13 +81,13 @@
             <div class="modal-btns" id="modal-buttons-div">
                 <button style="background: #2ed573" onclick="confirmHit(true)">SÍ ✅</button>
                 <button style="background: #ff4757" onclick="confirmHit(false)">NO ❌</button>
-                <button style="background: #7f8c8d" onclick="undoStop()">VOLVER (Error) ↩️</button>
+                <button style="background: #7f8c8d" onclick="undoStop()">VOLVER (Error de dedo) ↩️</button>
             </div>
         </div>
 
         <div id="modal-content-reset" style="display:none">
             <h2>¿REINICIAR JUEGO?</h2>
-            <p>Se perderán todos los puntos acumulados.</p>
+            <p>Se perderán todos los puntos y volverás al inicio.</p>
             <div class="modal-btns">
                 <button style="background: #ff4757" onclick="location.reload()">SÍ, REINICIAR 🔄</button>
                 <button style="background: #7f8c8d" onclick="closeResetModal()">CANCELAR</button>
@@ -119,24 +118,22 @@
     const statusMsg = document.getElementById('status-msg');
     const overlay = document.getElementById('modal-overlay');
 
+    // Muestra el modal de confirmación de reinicio
     function askReset() {
         if(isGameOver) { location.reload(); return; }
-        
-        clearInterval(timer);
+        clearInterval(timer); // Pausamos el juego
         document.getElementById('modal-content-game').style.display = 'none';
         document.getElementById('reset-button-div').style.display = 'none';
         document.getElementById('modal-content-reset').style.display = 'block';
         overlay.style.display = 'flex';
     }
 
+    // Cierra el modal de reinicio y decide si vuelve al juego o a la pregunta de acierto
     function closeResetModal() {
         document.getElementById('modal-content-reset').style.display = 'none';
-        
         if (activePlayer !== null) {
-            // Si alguien ya había pulsado ALTO, volvemos al modal de confirmación
             document.getElementById('modal-content-game').style.display = 'block';
         } else {
-            // Si no había nadie activo, cerramos el overlay y seguimos el tiempo
             overlay.style.display = 'none';
             document.getElementById('modal-content-game').style.display = 'block';
             if (img.style.display === 'block' && points > 0) startTimer();
@@ -207,6 +204,7 @@
         overlay.style.display = 'flex';
     }
 
+    // LA SOLUCIÓN AL ERROR DE DEDO
     function undoStop() {
         overlay.style.display = 'none';
         activePlayer = null;
@@ -227,7 +225,7 @@
         clearInterval(timer);
         img.style.filter = "blur(0px)";
         currentIdx++;
-        activePlayer = null; // Limpiamos el jugador activo para la siguiente ronda
+        activePlayer = null; 
         if (currentIdx >= deck.length) {
             showFinalWinner();
         } else {
@@ -243,10 +241,10 @@
         const winners = [];
         scores.forEach((s, i) => { if(s === maxScore) winners.push(i + 1); });
 
-        let mensaje = maxScore === 0 ? "¡Nadie puntuó! 😅" : 
-                     (winners.length === 1 ? `¡GANADOR JUGADOR ${winners[0]}! 🏆` : `¡EMPATE: Jugadores ${winners.join(", ")}! 🤝`);
+        let mensaje = maxScore === 0 ? "¡Nadie consiguió puntos! 😅" : 
+                     (winners.length === 1 ? `¡EL GANADOR ES EL JUGADOR ${winners[0]}! 🏆` : `¡EMPATE ENTRE LOS JUGADORES: ${winners.join(", ")}! 🤝`);
 
-        document.getElementById('modal-title').innerText = "¡FIN DEL JUEGO!";
+        document.getElementById('modal-title').innerText = "¡FIN DE LA PARTIDA!";
         document.getElementById('correct-name').innerText = "Resultados Finales";
         document.getElementById('winner-announcement').innerHTML = `<div class="winner-msg">${mensaje}</div>`;
         document.getElementById('modal-buttons-div').style.display = 'none';
