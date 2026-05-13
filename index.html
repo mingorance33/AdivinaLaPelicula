@@ -69,20 +69,32 @@
 
     <div id="action-row">
         <button id="btn-main" class="btn-action" onclick="nextRound()" style="display:none">EMPEZAR</button>
-        <button class="btn-action" style="background: #ff4757" onclick="safeReload()">REINICIAR</button>
+        <button class="btn-action" style="background: #ff4757" onclick="askReset()">REINICIAR</button>
     </div>
 </div>
 
 <div id="modal-overlay">
     <div id="modal">
-        <h2 id="modal-title">¿Acertó Jugador <span id="pl-num"></span>?</h2>
-        <h3 id="correct-name" style="color: #2e86de; text-transform: uppercase; margin: 10px 0;"></h3>
-        <div id="winner-announcement"></div>
-        <div class="modal-btns" id="modal-buttons-div">
-            <button style="background: #2ed573" onclick="confirm(true)">SÍ ✅</button>
-            <button style="background: #ff4757" onclick="confirm(false)">NO ❌</button>
-            <button style="background: #7f8c8d" onclick="undoStop()">VOLVER (Error) ↩️</button>
+        <div id="modal-content-game">
+            <h2 id="modal-title">¿Acertó Jugador <span id="pl-num"></span>?</h2>
+            <h3 id="correct-name" style="color: #2e86de; text-transform: uppercase; margin: 10px 0;"></h3>
+            <div id="winner-announcement"></div>
+            <div class="modal-btns" id="modal-buttons-div">
+                <button style="background: #2ed573" onclick="confirmHit(true)">SÍ ✅</button>
+                <button style="background: #ff4757" onclick="confirmHit(false)">NO ❌</button>
+                <button style="background: #7f8c8d" onclick="undoStop()">VOLVER (Error) ↩️</button>
+            </div>
         </div>
+
+        <div id="modal-content-reset" style="display:none">
+            <h2>¿REINICIAR JUEGO?</h2>
+            <p>Se perderán todos los puntos acumulados.</p>
+            <div class="modal-btns">
+                <button style="background: #ff4757" onclick="location.reload()">SÍ, REINICIAR 🔄</button>
+                <button style="background: #7f8c8d" onclick="closeModal()">CANCELAR</button>
+            </div>
+        </div>
+
         <div class="modal-btns" id="reset-button-div" style="display:none">
             <button style="background: #2e86de" onclick="location.reload()">JUGAR OTRA VEZ 🎮</button>
         </div>
@@ -104,12 +116,24 @@
     const pointsTxt = document.getElementById('points-label');
     const mainBtn = document.getElementById('btn-main');
     const statusMsg = document.getElementById('status-msg');
+    const overlay = document.getElementById('modal-overlay');
 
-    // Función de reinicio con confirmación de seguridad
-    function safeReload() {
-        const seguro = confirm("¿Estás seguro de que quieres reiniciar el juego? Se perderán todos los puntos.");
-        if (seguro) {
-            location.reload();
+    // Función para pedir reinicio (abre el modal)
+    function askReset() {
+        clearInterval(timer); // Pausamos el tiempo mientras decide
+        document.getElementById('modal-content-game').style.display = 'none';
+        document.getElementById('reset-button-div').style.display = 'none';
+        document.getElementById('modal-content-reset').style.display = 'block';
+        overlay.style.display = 'flex';
+    }
+
+    function closeModal() {
+        overlay.style.display = 'none';
+        document.getElementById('modal-content-reset').style.display = 'none';
+        document.getElementById('modal-content-game').style.display = 'block';
+        // Si el juego estaba en marcha (puntos > 0 y < 100), reanudamos
+        if (img.style.display === 'block' && activePlayer === null && points > 0) {
+            startTimer();
         }
     }
 
@@ -118,7 +142,6 @@
         try {
             const response = await fetch(url);
             if (!response.ok) throw new Error("Error");
-            
             const files = await response.json();
             deck = files
                 .filter(file => {
@@ -149,7 +172,6 @@
         img.style.display = 'block';
         img.src = deck[currentIdx].url;
         img.style.filter = "blur(20px)";
-        
         points = 100;
         pointsTxt.innerText = points;
         mainBtn.style.visibility = 'hidden';
@@ -176,18 +198,20 @@
         setStops(false);
         document.getElementById('pl-num').innerText = num;
         document.getElementById('correct-name').innerText = deck[currentIdx].name;
-        document.getElementById('modal-overlay').style.display = 'flex';
+        document.getElementById('modal-content-reset').style.display = 'none';
+        document.getElementById('modal-content-game').style.display = 'block';
+        overlay.style.display = 'flex';
     }
 
     function undoStop() {
-        document.getElementById('modal-overlay').style.display = 'none';
+        overlay.style.display = 'none';
         activePlayer = null;
         setStops(true);
         startTimer();
     }
 
-    function confirm(correct) {
-        document.getElementById('modal-overlay').style.display = 'none';
+    function confirmHit(correct) {
+        overlay.style.display = 'none';
         if (correct && activePlayer) {
             scores[activePlayer - 1] += points;
             updateScores();
@@ -197,9 +221,9 @@
 
     function finishRound() {
         clearInterval(timer);
+        activePlayer = null;
         img.style.filter = "blur(0px)";
         currentIdx++;
-        
         if (currentIdx >= deck.length) {
             showFinalWinner();
         } else {
@@ -214,22 +238,16 @@
         const winners = [];
         scores.forEach((s, i) => { if(s === maxScore) winners.push(i + 1); });
 
-        let mensaje = "";
-        if (maxScore === 0) {
-            mensaje = "¡Nadie ha conseguido puntos! 😅";
-        } else if (winners.length === 1) {
-            mensaje = `¡EL GANADOR ES EL JUGADOR ${winners[0]}! 🏆`;
-        } else {
-            mensaje = `¡EMPATE entre los jugadores: ${winners.join(", ")}! 🤝`;
-        }
+        let mensaje = maxScore === 0 ? "¡Nadie puntuó! 😅" : 
+                     (winners.length === 1 ? `¡GANADOR JUGADOR ${winners[0]}! 🏆` : `¡EMPATE: Jugadores ${winners.join(", ")}! 🤝`);
 
         document.getElementById('modal-title').innerText = "¡FIN DEL JUEGO!";
         document.getElementById('correct-name').innerText = "Resultados Finales";
         document.getElementById('winner-announcement').innerHTML = `<div class="winner-msg">${mensaje}</div>`;
-        
         document.getElementById('modal-buttons-div').style.display = 'none';
         document.getElementById('reset-button-div').style.display = 'flex';
-        document.getElementById('modal-overlay').style.display = 'flex';
+        document.getElementById('modal-content-reset').style.display = 'none';
+        overlay.style.display = 'flex';
     }
 
     function updateScores() {
